@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
 import AddCustomerDialog from '../components/AddCustomerDialog';
+import AddChallanDialog from '../components/AddChallanDialog';
 
 export default function DataTable() {
   const [search, setSearch] = useState('');
@@ -9,6 +10,8 @@ export default function DataTable() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [challanOpen, setChallanOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -25,9 +28,14 @@ export default function DataTable() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Filter columns: exclude those where ANY customer has an object value for that key
   const allColumns = Array.from(
-    new Set(customers.flatMap((item) => Object.keys(item)))
+    new Set(customers.flatMap(Object.keys))
+  ).filter(col =>
+    // Keep column only if **no customer** has an object value for it
+    !customers.some(customer => typeof customer[col] === 'object' && customer[col] !== null)
   );
+
 
   useEffect(() => {
     setVisibleColumns(allColumns);
@@ -54,9 +62,29 @@ export default function DataTable() {
 
   // New handlers for the buttons per row
   const handleAddChallan = (customer) => {
-    // Implement your logic here
-    alert(`Add Challan clicked for ${customer.email || 'unknown customer'}`);
+    if (!customer || !customer._id) {
+      console.error('Invalid customer:', customer);
+      return;
+    }
+    setSelectedCustomer(customer);
+    setChallanOpen(true);
   };
+
+  const handleChallanClose = () => {
+    setChallanOpen(false);
+    setSelectedCustomer(null);
+  };
+
+const handleChallanSave = (updatedCustomer) => {
+  setCustomers(prevCustomers =>
+    prevCustomers.map(cust =>
+      cust._id === updatedCustomer._id ? updatedCustomer : cust
+    )
+  );
+  setChallanOpen(false);
+  setSelectedCustomer(null);
+};
+
 
   const handleAddAgreement = (customer) => {
     // Implement your logic here
@@ -166,19 +194,25 @@ export default function DataTable() {
                     </td>
                   ))}
                   <td className="py-3 px-4 flex gap-2">
-                   <button
-  onClick={() => handleAddChallan(row)}
-  className="bg-green-600 hover:bg-green-700 text-white px-3 rounded h-8 flex items-center justify-center whitespace-nowrap"
->
-  Add Challan
-</button>
-<button
-  onClick={() => handleAddAgreement(row)}
-  className="bg-purple-600 hover:bg-purple-700 text-white px-3 rounded h-8 flex items-center justify-center whitespace-nowrap"
->
-  Add Agreement
-</button>
+                    <button
+                      onClick={() => handleAddChallan(row)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 rounded h-8 flex items-center justify-center whitespace-nowrap"
+                    >
+                      Add Challan
+                    </button>
 
+                    <AddChallanDialog
+                      open={challanOpen}
+                      onClose={handleChallanClose}
+                      onSave={handleChallanSave}
+                      customer={selectedCustomer}
+                    />
+                    <button
+                      onClick={() => handleAddAgreement(row)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-3 rounded h-8 flex items-center justify-center whitespace-nowrap"
+                    >
+                      Add Agreement
+                    </button>
                   </td>
                 </tr>
               ))

@@ -1,7 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb'; 
 
 const app = express();
 const PORT = 5000;
@@ -126,6 +126,56 @@ app.get('/customers', async (req, res) => {
   }
 });
 
+
+app.post('/customers/:id/challan', async (req, res) => {
+  try {
+    const customerId = req.params.id;
+
+    const {
+      challanNo,
+      vehicleNo,
+      keyNo,
+      batteryNo
+    } = req.body;
+
+    if (!challanNo || !vehicleNo) {
+      return res.status(400).json({ success: false, error: 'Challan number and vehicle number are required.' });
+    }
+
+    const customers = db.collection('customers');
+
+    // Check if customer exists
+    const customer = await customers.findOne({ _id: new ObjectId(customerId) });
+    if (!customer) {
+      return res.status(404).json({ success: false, error: 'Customer not found.' });
+    }
+
+    const challan = {
+      challanNo,
+      vehicleNo,
+      keyNo,
+      batteryNo,
+      updatedAt: new Date()
+    };
+
+    // ✅ Overwrite challan field (single entry)
+    const updateResult = await customers.updateOne(
+      { _id: new ObjectId(customerId) },
+      { $set: { challan } }
+    );
+
+    if (updateResult.modifiedCount === 1) {
+      const updatedCustomer = await customers.findOne({ _id: new ObjectId(customerId) });
+      updatedCustomer._id = updatedCustomer._id.toString();
+      res.json({ success: true, customer: updatedCustomer });
+    } else {
+      res.status(500).json({ success: false, error: 'Failed to update challan.' });
+    }
+
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
