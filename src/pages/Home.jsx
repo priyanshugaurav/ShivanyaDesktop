@@ -8,7 +8,7 @@ export const Home = () => {
   const { user } = useUser();
   return (
     <div className="mb-6 flex flex-col items-start justify-center gap-2 max-h-[87vh]">
-      <h1 className="text-4xl font-bold text-white-800 mt-3">
+      <h1 className="text-4xl font-bold text-white-800 mt-10">
         Welcome, <span className="text-primary">{user?.username || 'User'}</span>!
       </h1>
       <p className="text-sm text-gray-500 mt-1">
