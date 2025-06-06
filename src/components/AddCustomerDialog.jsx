@@ -6,11 +6,17 @@ export default function AddCustomerDialog({ open, onClose, onSave }) {
   const [formData, setFormData] = useState({
     name: '',
     village: '',
-    email: '',
+    fathersName: '',
+    address: '',
+    villageName: '',
+    district: '',
+    postOffice: '',
+    policeStation: '',
+    pincode: '',
     phone: '',
     pan: '',
     aadhar: '',
-    pincode: '',
+    email: '',
   });
 
   const firstInputRef = useRef(null);
@@ -68,15 +74,21 @@ export default function AddCustomerDialog({ open, onClose, onSave }) {
 
   if (!open) return null;
 
-  const inputs = [
-    { label: 'Name', name: 'name' },
-    { label: 'Village', name: 'village' },
-    { label: 'Email', name: 'email' },
-    { label: 'Phone', name: 'phone' },
-    { label: 'PAN Card', name: 'pan' },
-    { label: 'Aadhar', name: 'aadhar' },
-    { label: 'Pincode', name: 'pincode' },
-  ];
+  const inputs =  [
+  { label: 'Name', name: 'name' },
+  { label: 'Village', name: 'village' },
+  { label: "Father's Name", name: 'fathersName' },
+  { label: 'Address', name: 'address' },
+  { label: 'Village Name', name: 'villageName' },
+  { label: 'District', name: 'district' },
+  { label: 'Post Office', name: 'postOffice' },
+  { label: 'Police Station', name: 'policeStation' },
+  { label: 'Pincode', name: 'pincode' },
+  { label: 'Phone', name: 'phone' },
+  { label: 'PAN Card', name: 'pan' },
+  { label: 'Aadhar', name: 'aadhar' },
+];
+
 
   return (
     <>
@@ -85,7 +97,7 @@ export default function AddCustomerDialog({ open, onClose, onSave }) {
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
         onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       >
-        <div className="bg-[#121212] text-white rounded-lg w-full max-w-[400px] shadow-lg mx-4 max-h-[600px] flex flex-col">
+        <div className="bg-[#121212] text-white rounded-lg w-full max-w-[500px] shadow-lg mx-4 max-h-[700px] flex flex-col">
           <div className="flex justify-between items-center p-6 border-b border-zinc-700">
             <h2 className="text-lg font-semibold">Add Customer</h2>
             <button onClick={onClose} className="text-white text-xl hover:text-red-400">&times;</button>

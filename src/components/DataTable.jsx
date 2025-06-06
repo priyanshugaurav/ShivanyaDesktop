@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
 import AddCustomerDialog from '../components/AddCustomerDialog';
 import AddChallanDialog from '../components/AddChallanDialog';
+import AddAgreementDialog from '../components/AddAgreementDialog';
 
 export default function DataTable() {
   const [search, setSearch] = useState('');
@@ -12,6 +13,9 @@ export default function DataTable() {
   const [loading, setLoading] = useState(true);
   const [challanOpen, setChallanOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const DEFAULT_HIDDEN_COLUMNS = ['_id', 'createdAt', 'email'];
+  const [agreementOpen, setAgreementOpen] = useState(false);
+  const STORAGE_KEY = 'visibleColumns';
 
   useEffect(() => {
     setLoading(true);
@@ -38,7 +42,17 @@ export default function DataTable() {
 
 
   useEffect(() => {
-    setVisibleColumns(allColumns);
+    const stored = localStorage.getItem(STORAGE_KEY);
+
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setVisibleColumns(parsed);
+    } else {
+      // Hide default hidden columns
+      const filtered = allColumns.filter(col => !DEFAULT_HIDDEN_COLUMNS.includes(col));
+      setVisibleColumns(filtered);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    }
   }, [customers.length]);
 
   const filteredData = customers.filter((row) =>
@@ -48,10 +62,15 @@ export default function DataTable() {
   );
 
   const toggleColumn = (col) => {
-    setVisibleColumns((prev) =>
-      prev.includes(col) ? prev.filter((c) => c !== col) : [...prev, col]
-    );
+    setVisibleColumns((prev) => {
+      const updated = prev.includes(col)
+        ? prev.filter((c) => c !== col)
+        : [...prev, col];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
+
 
   const handleAddCustomerClick = () => setIsDialogOpen(true);
   const handleDialogClose = () => setIsDialogOpen(false);
@@ -75,20 +94,20 @@ export default function DataTable() {
     setSelectedCustomer(null);
   };
 
-const handleChallanSave = (updatedCustomer) => {
-  setCustomers(prevCustomers =>
-    prevCustomers.map(cust =>
-      cust._id === updatedCustomer._id ? updatedCustomer : cust
-    )
-  );
-  setChallanOpen(false);
-  setSelectedCustomer(null);
-};
+  const handleChallanSave = (updatedCustomer) => {
+    setCustomers(prevCustomers =>
+      prevCustomers.map(cust =>
+        cust._id === updatedCustomer._id ? updatedCustomer : cust
+      )
+    );
+    setChallanOpen(false);
+    setSelectedCustomer(null);
+  };
 
 
   const handleAddAgreement = (customer) => {
-    // Implement your logic here
-    alert(`Add Agreement clicked for ${customer.email || 'unknown customer'}`);
+    setSelectedCustomer(customer);
+    setAgreementOpen(true);
   };
 
   const skeletonRows = Array.from({ length: 5 }).map((_, idx) => (
@@ -179,6 +198,7 @@ const handleChallanSave = (updatedCustomer) => {
             {loading ? (
               skeletonRows
             ) : filteredData.length === 0 ? (
+
               <tr>
                 <td colSpan={visibleColumns.length + 2} className="text-center text-zinc-400 py-6">
                   No data available
@@ -198,7 +218,8 @@ const handleChallanSave = (updatedCustomer) => {
                       onClick={() => handleAddChallan(row)}
                       className="bg-green-600 hover:bg-green-700 text-white px-3 rounded h-8 flex items-center justify-center whitespace-nowrap"
                     >
-                      Add Challan
+                      {row.challan && Object.keys(row.challan).length > 0 ? 'View Challan' : 'Add Challan'}
+                      {/* Add Challan */}
                     </button>
 
                     <AddChallanDialog
@@ -213,6 +234,22 @@ const handleChallanSave = (updatedCustomer) => {
                     >
                       Add Agreement
                     </button>
+
+
+                    <AddAgreementDialog
+                      open={agreementOpen}
+                      onClose={() => setAgreementOpen(false)}
+                      onSave={(updatedCustomer) => {
+                        setCustomers(prevCustomers =>
+      prevCustomers.map(cust =>
+        cust._id === updatedCustomer._id ? updatedCustomer : cust
+      )
+    );
+                        // Optionally update your table or customer list here
+                        setAgreementOpen(false);
+                      }}
+                      customer={selectedCustomer}
+                    />
                   </td>
                 </tr>
               ))

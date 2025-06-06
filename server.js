@@ -1,7 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import { MongoClient, ObjectId } from 'mongodb'; 
+import { MongoClient, ObjectId } from 'mongodb';
 
 const app = express();
 const PORT = 5000;
@@ -77,11 +77,16 @@ app.post('/customers', async (req, res) => {
     const {
       name,
       village,
-      email,
+      fathersName,
+      address,
+      villageName,
+      district,
+      postOffice,
+      policeStation,
+      pincode,
       phone,
       pan,
       aadhar,
-      pincode
     } = req.body;
 
     if (!name || !phone) {
@@ -94,11 +99,16 @@ app.post('/customers', async (req, res) => {
     const result = await customers.insertOne({
       name,
       village,
-      email,
+      fathersName,
+      address,
+      villageName,
+      district,
+      postOffice,
+      policeStation,
+      pincode,
       phone,
       pan,
       aadhar,
-      pincode,
       createdAt: new Date()
     });
 
@@ -133,7 +143,22 @@ app.post('/customers/:id/challan', async (req, res) => {
 
     const {
       challanNo,
+      modelno,
+      DTO,
+      ONE,
+      color,
+      productNo,
+      frameNo,
+      engineNo,
+      bookNo,
       vehicleNo,
+      cylinderNo,
+      motorNo,
+      tools,
+      rear,
+      tyre,
+      mirror,
+      front,
       keyNo,
       batteryNo
     } = req.body;
@@ -152,7 +177,22 @@ app.post('/customers/:id/challan', async (req, res) => {
 
     const challan = {
       challanNo,
+      modelno,
+      DTO,
+      ONE,
+      color,
+      productNo,
+      frameNo,
+      engineNo,
+      bookNo,
       vehicleNo,
+      cylinderNo,
+      motorNo,
+      tools,
+      rear,
+      tyre,
+      mirror,
+      front,
       keyNo,
       batteryNo,
       updatedAt: new Date()
@@ -176,6 +216,79 @@ app.post('/customers/:id/challan', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+app.post('/customers/:id/agreement', async (req, res) => {
+  try {
+    const customerId = req.params.id;
+
+    const {
+      onroadprice,
+      payment,
+      loanAmount,
+      bpf,
+      downpayment,
+      dues,
+      netprofit,
+      margin,
+      paymentType,
+      paymentDate,
+      registrationAmount,
+      permit,
+      onlinepayment,
+      totalPayment,
+      remark
+    } = req.body;
+
+    // Basic required fields check (adjust as needed)
+    if (!payment || !paymentType) {
+      return res.status(400).json({ success: false, error: 'Payment and Payment Type are required.' });
+    }
+
+    const customers = db.collection('customers');
+
+    // Check if customer exists
+    const customer = await customers.findOne({ _id: new ObjectId(customerId) });
+    if (!customer) {
+      return res.status(404).json({ success: false, error: 'Customer not found.' });
+    }
+
+    const agreement = {
+      onroadprice,
+      payment,
+      loanAmount,
+      bpf,
+      downpayment,
+      dues,
+      netprofit,
+      margin,
+      paymentType,
+      paymentDate,
+      registrationAmount,
+      permit,
+      onlinepayment,
+      totalPayment,
+      remark: Array.isArray(remark) ? remark : [],
+      updatedAt: new Date()
+    };
+
+    const updateResult = await customers.updateOne(
+      { _id: new ObjectId(customerId) },
+      { $set: { agreement } }
+    );
+
+    if (updateResult.modifiedCount === 1) {
+      const updatedCustomer = await customers.findOne({ _id: new ObjectId(customerId) });
+      updatedCustomer._id = updatedCustomer._id.toString();
+      res.json({ success: true, customer: updatedCustomer });
+    } else {
+      res.status(500).json({ success: false, error: 'Failed to update agreement.' });
+    }
+
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);

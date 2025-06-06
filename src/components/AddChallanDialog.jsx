@@ -7,11 +7,24 @@ export default function AddChallanDialog({ open, onClose, onSave, customer }) {
     vehicleNo: '',
     keyNo: '',
     batteryNo: '',
+    modelno: '',
+    DTO: '',
+    ONE: '',
+    color: '',
+    productNo: '',
+    frameNo: '',
+    engineNo: '',
+    bookNo: '',
+    cylinderNo: '',
+    motorNo: '',
+    tools: false,
+    rear: false,
+    tyre: false,
+    mirror: false,
+    front: false,
   });
 
-  // New state to track if form is editable
   const [isEditing, setIsEditing] = useState(true);
-
   const firstInputRef = useRef(null);
 
   useEffect(() => {
@@ -24,8 +37,22 @@ export default function AddChallanDialog({ open, onClose, onSave, customer }) {
         vehicleNo: customer.challan.vehicleNo || '',
         keyNo: customer.challan.keyNo || '',
         batteryNo: customer.challan.batteryNo || '',
+        modelno: customer.challan.modelno || '',
+        DTO: customer.challan.DTO || '',
+        ONE: customer.challan.ONE || '',
+        color: customer.challan.color || '',
+        productNo: customer.challan.productNo || '',
+        frameNo: customer.challan.frameNo || '',
+        engineNo: customer.challan.engineNo || '',
+        bookNo: customer.challan.bookNo || '',
+        cylinderNo: customer.challan.cylinderNo || '',
+        motorNo: customer.challan.motorNo || '',
+        tools: customer.challan.tools || false,
+        rear: customer.challan.rear || false,
+        tyre: customer.challan.tyre || false,
+        mirror: customer.challan.mirror || false,
+        front: customer.challan.front || false,
       });
-      // Disable editing if challan exists
       setIsEditing(false);
     } else if (open) {
       setFormData({
@@ -33,15 +60,32 @@ export default function AddChallanDialog({ open, onClose, onSave, customer }) {
         vehicleNo: '',
         keyNo: '',
         batteryNo: '',
+        modelno: '',
+        DTO: '',
+        ONE: '',
+        color: '',
+        productNo: '',
+        frameNo: '',
+        engineNo: '',
+        bookNo: '',
+        cylinderNo: '',
+        motorNo: '',
+        tools: false,
+        rear: false,
+        tyre: false,
+        mirror: false,
+        front: false,
       });
-      // Enable editing if no challan exists
       setIsEditing(true);
     }
   }, [open, customer]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
   const handleSave = async () => {
@@ -86,11 +130,12 @@ export default function AddChallanDialog({ open, onClose, onSave, customer }) {
   if (!open) return null;
 
   const inputs = [
-    { label: 'Challan No.', name: 'challanNo' },
-    { label: 'Vehicle No.', name: 'vehicleNo' },
-    { label: 'Key No.', name: 'keyNo' },
-    { label: 'Battery No.', name: 'batteryNo' },
+    'challanNo', 'vehicleNo', 'keyNo', 'batteryNo',
+    'modelno', 'DTO', 'ONE', 'color', 'productNo',
+    'frameNo', 'engineNo', 'bookNo', 'cylinderNo', 'motorNo'
   ];
+
+  const checkboxes = ['tools', 'rear', 'tyre', 'mirror', 'front'];
 
   return (
     <div
@@ -100,51 +145,40 @@ export default function AddChallanDialog({ open, onClose, onSave, customer }) {
     >
       <div className="bg-[#121212] text-white rounded-lg w-full max-w-[400px] shadow-lg mx-4 max-h-[600px] flex flex-col">
         <div className="flex justify-between items-center p-6 border-b border-zinc-700">
-          <h2 className="text-lg font-semibold">Add Challan Details</h2>
-          <button onClick={onClose} className="text-white text-xl hover:text-red-400">&times;</button>
+          <h2 className="text-lg font-semibold">{isEditing ? 'Add Challan' : 'View Challan'}</h2>
+          <button onClick={onClose}>&times;</button>
         </div>
-
-        <p className="px-6 pt-4 text-sm text-zinc-400 mb-2">Enter challan details below.</p>
-
-        <form
-          className="px-6 py-3 overflow-y-auto flex-grow space-y-6"
-          onSubmit={e => { e.preventDefault(); handleSave(); }}
-          style={{ scrollbarWidth: 'thin' }}
-        >
-          {inputs.map(({ label, name }, idx) => (
-            <div key={name} className="relative mt-4">
+        <div className="p-6 overflow-auto">
+          {inputs.map((field, idx) => (
+            <div key={field} className="mb-4">
+              <label className="block mb-1 text-sm capitalize" htmlFor={field}>{field.replace(/([A-Z])/g, ' $1')}</label>
               <input
                 ref={idx === 0 ? firstInputRef : null}
                 type="text"
-                name={name}
-                id={name}
-                value={formData[name]}
+                name={field}
+                value={formData[field]}
                 onChange={handleChange}
-                placeholder=" "
-                className="
-                  peer w-full px-3 pt-5 pb-2 rounded-md bg-[#1f1f1f] text-white
-                  focus:outline-none focus:ring-2 focus:ring-blue-500
-                "
-                autoComplete="off"
-                disabled={!isEditing}  // disable if not editing
+                disabled={!isEditing}
+                className="w-full px-3 py-2 bg-zinc-800 text-white border border-zinc-600 rounded"
               />
-              <label
-                htmlFor={name}
-                className={`
-                  absolute left-3 text-zinc-400 text-sm transition-all duration-200
-                  pointer-events-none
-                  peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-zinc-500
-                  peer-focus:top-1 peer-focus:text-xs peer-focus:text-blue-400
-                  ${formData[name] ? 'top-1 text-xs text-blue-400' : 'top-2.5'}
-                `}
-              >
-                {label}
-              </label>
             </div>
           ))}
-        </form>
 
-        <div className="flex justify-end gap-3 p-6 border-t border-zinc-700 bg-[#121212]">
+          {checkboxes.map(field => (
+            <div key={field} className="mb-2 flex items-center">
+              <input
+                type="checkbox"
+                name={field}
+                checked={formData[field]}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="mr-2"
+              />
+              <label htmlFor={field} className="text-sm capitalize">{field}</label>
+            </div>
+          ))}
+        </div>
+       <div className="flex justify-end gap-3 p-6 border-t border-zinc-700 bg-[#121212]">
           <button
             type="button"
             onClick={onClose}

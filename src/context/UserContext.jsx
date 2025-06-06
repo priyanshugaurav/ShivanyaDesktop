@@ -1,16 +1,27 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const UserContext = createContext();
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
 
-  const login = (userData) => {
-    setUser(userData);
-  };
+  useEffect(() => {
+    const session = localStorage.getItem('userSession');
+    if (session) {
+      const { user, expiry } = JSON.parse(session);
+      const now = new Date().getTime();
+      if (now < expiry) {
+        setUser(user); // still valid
+      } else {
+        localStorage.removeItem('userSession'); // expired
+      }
+    }
+  }, []);
 
+  const login = userData => setUser(userData);
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('userSession');
   };
 
   return (
@@ -20,7 +31,4 @@ export function UserProvider({ children }) {
   );
 }
 
-// Custom hook for easier usage
-export function useUser() {
-  return useContext(UserContext);
-}
+export const useUser = () => useContext(UserContext);

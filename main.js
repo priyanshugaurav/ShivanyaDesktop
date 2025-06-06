@@ -10,8 +10,7 @@ let backendProcess;
 
 async function createWindow() {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    show: false, // Hide until ready to prevent flicker before maximize
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -20,7 +19,17 @@ async function createWindow() {
   });
 
   win.loadURL(process.env.ELECTRON_START_URL || `file://${path.join(__dirname, 'dist/index.html')}`);
+
+  // Auto-maximize when ready
+  win.once('ready-to-show', () => {
+    win.maximize();
+    win.show();
+
+    // Set zoom factor to 90% (0.9)
+    win.webContents.setZoomFactor(0.7);
+  });
 }
+
 
 app.whenReady().then(() => {
   // Start backend server
