@@ -190,7 +190,7 @@ export default function DataTable() {
       {/* Scrollable Table Section */}
       <div className="overflow-auto max-h-[calc(100vh-230px)] rounded-lg border border-zinc-800">
         <table className="min-w-full bg-[#121212]">
-          <thead className="bg-zinc-900 text-white text-sm sticky top-0 z-10">
+          <thead className="bg-zinc-900 text-violet-200 text-sm sticky top-0 z-10">
             <tr>
               <th className="py-3 px-4 text-left">#</th>
               {visibleColumns.map((col) => (

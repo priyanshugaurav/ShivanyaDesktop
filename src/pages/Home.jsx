@@ -3,6 +3,9 @@ import StatsCard from '../components/StatsCard';
 import Chart1 from '../components/chart1';
 import MonthlyTable from '../components/MonthlyTable';
 import PieChartDarkTheme from '../components/PieChartDarkTheme';
+import PendingDuesPopup from '../components/PendingDuesPopup';
+import SalesModelCard from '../components/SalesModelCard';
+
 import axios from 'axios';
 
 const Home = () => {
@@ -18,6 +21,9 @@ const Home = () => {
   const [totatDTOPayment, setTotalDTOPayment] = useState(0);
   const [trendStats, setTrendStats] = useState({});
   const [totalDues, setTotalDues] = useState(0);
+  const [duesPopupOpen, setDuesPopupOpen] = useState(false);
+  const [customersWithDues, setCustomersWithDues] = useState([]);
+  const [selectedDueCustomer, setSelectedDueCustomer] = useState(null);
 
 
 
@@ -38,6 +44,27 @@ const Home = () => {
   ];
 
   const years = [2023, 2024, 2025, 2026]; // Extend as needed
+  // Aggregate models from customerData.challan.model
+  function getModelsFromCustomers(customers) {
+    const modelCountMap = {};
+
+    customers.forEach(customer => {
+      // Defensive check in case challan or model is missing
+      console.log("dfs", customer)
+      const model = customer.challan?.modelno;
+      console.log(model)
+      if (model) {
+        if (modelCountMap[model]) {
+          modelCountMap[model]++;
+        } else {
+          modelCountMap[model] = 1;
+        }
+      }
+    });
+
+    // Convert map to array of { name, count }
+    return Object.entries(modelCountMap).map(([name, count]) => ({ name, count }));
+  }
 
 
   function filterByCustomMonth(customers, month, year) {
@@ -48,6 +75,25 @@ const Home = () => {
       const paymentDate = new Date(paymentDateStr);
       return paymentDate.getMonth() === month && paymentDate.getFullYear() === year;
     });
+  }
+  function openDuesPopup() {
+    if (!customerData) return;
+    let filtered = [];
+
+    if (useCustomMonth) {
+      filtered = filterByCustomMonth(customerData, selectedMonth, selectedYear);
+    } else {
+      filtered = filterByPeriod(customerData, selectedPeriod);
+    }
+
+    // Filter customers with dues > 0
+    const withDues = filtered.filter(c => {
+      const due = parseFloat(c.agreement?.dues || 0);
+      return !isNaN(due) && due > 0;
+    });
+    console.log(withDues)
+    setCustomersWithDues(withDues);
+    setDuesPopupOpen(true);
   }
 
 
@@ -195,21 +241,21 @@ const Home = () => {
         }
 
         // Add dues to current and previous values
-const currentValues = {
-  downPayment: sumField(thisMonthData, 'downPayment'),
-  netprofit: sumField(thisMonthData, 'netprofit'),
-  magadhMargin: sumField(thisMonthData, 'magadhMargin'),
-  totatDTOPayment: sumField(thisMonthData, 'totatDTOPayment'),
-  dues: sumField(thisMonthData, 'dues'),
-};
+        const currentValues = {
+          downPayment: sumField(thisMonthData, 'downPayment'),
+          netprofit: sumField(thisMonthData, 'netprofit'),
+          magadhMargin: sumField(thisMonthData, 'magadhMargin'),
+          totatDTOPayment: sumField(thisMonthData, 'totatDTOPayment'),
+          dues: sumField(thisMonthData, 'dues'),
+        };
 
-const previousValues = {
-  downPayment: sumField(lastMonthData, 'downPayment'),
-  netprofit: sumField(lastMonthData, 'netprofit'),
-  magadhMargin: sumField(lastMonthData, 'magadhMargin'),
-  totatDTOPayment: sumField(lastMonthData, 'totatDTOPayment'),
-  dues: sumField(lastMonthData, 'dues'),
-};
+        const previousValues = {
+          downPayment: sumField(lastMonthData, 'downPayment'),
+          netprofit: sumField(lastMonthData, 'netprofit'),
+          magadhMargin: sumField(lastMonthData, 'magadhMargin'),
+          totatDTOPayment: sumField(lastMonthData, 'totatDTOPayment'),
+          dues: sumField(lastMonthData, 'dues'),
+        };
 
 
         // Store trend calculations in state
@@ -245,6 +291,18 @@ const previousValues = {
 
 
 
+let filteredData = [];
+if (customerData) {
+  filteredData = useCustomMonth
+    ? filterByCustomMonth(customerData, selectedMonth, selectedYear)
+    : filterByPeriod(customerData, selectedPeriod);
+}
+
+const modelData = getModelsFromCustomers(filteredData);
+const pieChartData = modelData.map(item => ({
+  name: item.name,
+  value: item.count,
+}));
 
 
   return (
@@ -316,9 +374,23 @@ const previousValues = {
         </label>
 
 
-        <div className="ml-auto text-white font-semibold text-3xl">
-  Total Dues: ₹{totalDues.toLocaleString('en-IN')}
-</div>
+        <div
+          onClick={openDuesPopup}
+          className="ml-auto text-white font-semibold text-3xl cursor-pointer hover:text-amber-100 transition-colors select-none"
+          title="Click to see details"
+        >
+          Total Dues: <span className='text-green-400'>₹{totalDues.toLocaleString('en-IN')}</span>
+        </div>
+
+        <PendingDuesPopup
+          open={duesPopupOpen}
+          onClose={() => setDuesPopupOpen(false)}
+          customersWithDues={customersWithDues}
+          onSelectCustomer={(customer) => {
+            setSelectedDueCustomer(customer);
+          }}
+        />
+
       </div>
 
 
@@ -368,42 +440,12 @@ const previousValues = {
 
 
       <div className="w-full max-w-7xl mx-auto mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="col-span-1 lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <StatsCard
-            title="Customer Retention"
-            value="87%"
-            trendText="Up from last month"
-            percentage="+4.2%"
-            subtitle="Based on customer feedback"
-            trendingUp={true}
-          />
-          <StatsCard
-            title="Ad Spend"
-            value="$3,500"
-            trendText="Stable compared to last month"
-            percentage="0.0%"
-            subtitle="Advertising budget"
-            trendingUp={true}
-          />
-          <StatsCard
-            title="Support Tickets"
-            value="230"
-            trendText="Slightly up"
-            percentage="+2.1%"
-            subtitle="Customer support data"
-            trendingUp={true}
-          />
-          <StatsCard
-            title="Conversion Rate"
-            value="3.7%"
-            trendText="Improved this month"
-            percentage="+1.5%"
-            subtitle="Website analytics"
-            trendingUp={true}
-          />
+        <div className="col-span-1 lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <SalesModelCard data={modelData}/>
+          <SalesModelCard data={modelData}/>
+          <PieChartDarkTheme data={pieChartData} />
         </div>
         <div className="col-span-1">
-          <PieChartDarkTheme />
         </div>
       </div>
       <MonthlyTable />
