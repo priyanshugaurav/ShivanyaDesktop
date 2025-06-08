@@ -9,7 +9,7 @@ export const Sales = () => {
   return (
     <div className="mb-6 flex flex-col items-start justify-center gap-2 max-h-[87vh]">
       <h1 className="text-4xl font-bold text-white-800 mt-10">
-        Welcome, <span className="text-primary">{user?.username || 'User'}</span>!
+        Welcome, <span className="text-violet-700">{user?.username || 'User'}</span>!
       </h1>
       <p className="text-sm text-gray-500 mt-1">
         We’re glad to have you back. Explore your dashboard below.

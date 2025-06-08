@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Home, User, Code, Pencil, LineChart, ShoppingCart, Users, ChevronLeft, ChevronRight } from "lucide-react";
-import { Link } from 'react-router-dom';
+
 import { useUser } from '../context/UserContext';  // adjust path as needed
+import { Link, useLocation } from 'react-router-dom';
+
 
 const menuItems = [
   { icon: <Home size={18} />, label: 'Home', count: 1, to: '/' },
@@ -21,6 +23,8 @@ export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  const location = useLocation();
+
 
   return (
     <div
@@ -40,29 +44,35 @@ export default function Sidebar() {
         {/* Menu */}
         <nav className="space-y-2">
           {menuItems.map((item, i) => {
-            const content = (
-              <div
-                className={`flex items-center justify-between px-3 py-2 hover:bg-white/10 rounded-md cursor-pointer transition`}
-                title={isCollapsed ? item.label : undefined} // show tooltip when collapsed
-              >
-                <div className="flex items-center gap-3 text-sm font-medium">
-                  {item.icon}
-                  {!isCollapsed && <span>{item.label}</span>}
-                </div>
-                {!isCollapsed && (
-                  <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded-md">{item.count}</span>
-                )}
-              </div>
-            );
+  const isActive = location.pathname === item.to;
+  const content = (
+    <div
+      className={`flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition ${
+        isActive ? 'bg-white/20 text-amber-200' : 'hover:bg-white/10'
+      }`}
+      title={isCollapsed ? item.label : undefined}
+    >
+      <div className="flex items-center gap-3 text-sm font-medium">
+        {item.icon}
+        {!isCollapsed && <span>{item.label}</span>}
+      </div>
+      {!isCollapsed && (
+        <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded-md">
+          {item.count}
+        </span>
+      )}
+    </div>
+  );
 
-            return item.to ? (
-              <Link to={item.to} key={i} className="no-underline text-white block">
-                {content}
-              </Link>
-            ) : (
-              <div key={i}>{content}</div>
-            );
-          })}
+ return item.to ? (
+  <Link to={item.to} key={i} className="no-underline block">
+    {content}
+  </Link>
+) : (
+  <div key={i}>{content}</div>
+);
+})}
+
         </nav>
 
         {/* Resources Header */}
