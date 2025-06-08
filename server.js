@@ -156,9 +156,8 @@ app.post('/customers/:id/challan', async (req, res) => {
       motorNo,
       tools,
       rear,
-      tyre,
+      tyreMakeFront,
       mirror,
-      front,
       keyNo,
       batteryNo
     } = req.body;
@@ -190,9 +189,8 @@ app.post('/customers/:id/challan', async (req, res) => {
       motorNo,
       tools,
       rear,
-      tyre,
+      tyreMakeFront,
       mirror,
-      front,
       keyNo,
       batteryNo,
       updatedAt: new Date()
@@ -223,26 +221,19 @@ app.post('/customers/:id/agreement', async (req, res) => {
 
     const {
       onroadprice,
-      payment,
       loanAmount,
-      bpf,
-      downpayment,
+      bankProcessingFee,
+      downPayment,
       dues,
-      netprofit,
-      margin,
+      magadhMargin,
+      registerationAmount,
+      permit,
+      onlinePayment,
+      totalDTOpayment,
       paymentType,
       paymentDate,
-      registrationAmount,
-      permit,
-      onlinepayment,
-      totalPayment,
-      remark
+      remark = [],
     } = req.body;
-
-    // Basic required fields check (adjust as needed)
-    if (!payment || !paymentType) {
-      return res.status(400).json({ success: false, error: 'Payment and Payment Type are required.' });
-    }
 
     const customers = db.collection('customers');
 
@@ -252,21 +243,31 @@ app.post('/customers/:id/agreement', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Customer not found.' });
     }
 
+    // Default all possibly missing numeric fields to 0
+    const safeDownPayment = Number(downPayment) || 0;
+    const safeMagadhMargin = Number(magadhMargin) || 0;
+    const safeRegistration = Number(registerationAmount) || 0;
+    const safePermit = Number(permit) || 0;
+    const safeOnlinePayment = Number(onlinePayment) || 0;
+
+    // Compute total DTO and net profit safely
+    const totalDTO = safeRegistration + safePermit + safeOnlinePayment;
+    const netProfit = safeDownPayment - (safeMagadhMargin + totalDTO);
+
     const agreement = {
       onroadprice,
-      payment,
       loanAmount,
-      bpf,
-      downpayment,
+      bankProcessingFee,
+      downPayment,
       dues,
-      netprofit,
-      margin,
+      magadhMargin,
+      registerationAmount,
+      permit,
+      onlinePayment,
+      totatDTOPayment: totalDTO,
+      netprofit: netProfit,
       paymentType,
       paymentDate,
-      registrationAmount,
-      permit,
-      onlinepayment,
-      totalPayment,
       remark: Array.isArray(remark) ? remark : [],
       updatedAt: new Date()
     };
@@ -288,6 +289,7 @@ app.post('/customers/:id/agreement', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 
 app.listen(PORT, () => {

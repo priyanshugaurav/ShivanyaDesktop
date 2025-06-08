@@ -4,19 +4,18 @@ import { toast, Slide } from 'react-toastify';
 export default function AddAgreementDialog({ open, onClose, onSave, customer }) {
   const [formData, setFormData] = useState({
     onroadprice: '',
-    payment: '',
-    loanamount: '',
-    bpf: '',
-    downpayment: '',
+    loanAmount: '',
+    bankProcessingFee: '',
+    downPayment: '',
     dues: '',
-    netprofit: '',
-    margin: '',
-    paymentType: '',
-    paymentDate: '',
+    magadhMargin: '',
     registerationAmount: '',
     permit: '',
-    onlinepayment: '',
-    totalpayment: '',
+    onlinePayment: '',
+    totatDTOPayment: '',
+    netprofit: '',
+    paymentType: '',
+    paymentDate: '',
     remarks: ['']
   });
 
@@ -27,40 +26,39 @@ export default function AddAgreementDialog({ open, onClose, onSave, customer }) 
     if (open && firstInputRef.current) firstInputRef.current.focus();
 
     if (open && customer?.agreement) {
+      const ag = customer.agreement;
       setFormData({
-        onroadprice: customer.agreement.onroadprice || '',
-        payment: customer.agreement.payment || '',
-        loanamount: customer.agreement.loanamount || '',
-        bpf: customer.agreement.bpf || '',
-        downpayment: customer.agreement.downpayment || '',
-        dues: customer.agreement.dues || '',
-        netprofit: customer.agreement.netprofit || '',
-        margin: customer.agreement.margin || '',
-        paymentType: customer.agreement.paymentType || '',
-        paymentDate: customer.agreement.paymentDate || '',
-        registerationAmount: customer.agreement.registerationAmount || '',
-        permit: customer.agreement.permit || '',
-        onlinepayment: customer.agreement.onlinepayment || '',
-        totalpayment: customer.agreement.totalpayment || '',
-        remarks: customer.agreement.remarks || ['']
+        onroadprice: ag.onroadprice || '',
+        loanAmount: ag.loanAmount || '',
+        bankProcessingFee: ag.bankProcessingFee || '',
+        downPayment: ag.downPayment || '',
+        dues: ag.dues || '',
+        magadhMargin: ag.magadhMargin || '',
+        registerationAmount: ag.registerationAmount || '',
+        permit: ag.permit || '',
+        onlinePayment: ag.onlinePayment || '',
+        totatDTOPayment: ag.totatDTOPayment || '',
+        netprofit: ag.netprofit || '',
+        paymentType: ag.paymentType || '',
+        paymentDate: ag.paymentDate || '',
+        remarks: ag.remark || ['']
       });
       setIsEditing(false);
     } else if (open) {
       setFormData({
         onroadprice: '',
-        payment: '',
-        loanamount: '',
-        bpf: '',
-        downpayment: '',
+        loanAmount: '',
+        bankProcessingFee: '',
+        downPayment: '',
         dues: '',
-        netprofit: '',
-        margin: '',
-        paymentType: '',
-        paymentDate: '',
+        magadhMargin: '',
         registerationAmount: '',
         permit: '',
-        onlinepayment: '',
-        totalpayment: '',
+        onlinePayment: '',
+        totatDTOPayment: '',
+        netprofit: '',
+        paymentType: '',
+        paymentDate: '',
         remarks: ['']
       });
       setIsEditing(true);
@@ -89,10 +87,15 @@ export default function AddAgreementDialog({ open, onClose, onSave, customer }) 
     }
 
     try {
+      const { remarks, ...rest } = formData;
+
       const response = await fetch(`http://localhost:5000/customers/${customer._id}/agreement`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...rest,
+          remark: remarks,  // send as `remark` to match backend
+        }),
       });
 
       const data = await response.json();
@@ -124,81 +127,146 @@ export default function AddAgreementDialog({ open, onClose, onSave, customer }) 
   if (!open) return null;
 
   const inputs = [
-    'onroadprice', 'payment', 'loanamount', 'bpf', 'downpayment',
-    'dues', 'netprofit', 'margin', 'registerationAmount', 'permit',
-    'onlinepayment', 'totalpayment'
+    'onroadprice',
+    'loanAmount',
+    'bankProcessingFee',
+    'downPayment',
+    'dues',
+    'magadhMargin',
+    'registerationAmount',
+    'permit',
+    'onlinePayment'
   ];
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-12 pb-12 overflow-auto"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className="bg-[#121212] text-white rounded-lg w-full max-w-[500px] shadow-lg mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b border-zinc-700">
-          <h2 className="text-lg font-semibold">Add Agreement Details</h2>
-          <button onClick={onClose}>&times;</button>
-        </div>
-        <div className="p-6 space-y-4">
-          {inputs.map((name, idx) => (
-            <div key={name}>
-              <label className="block text-sm capitalize mb-1">{name.replace(/([A-Z])/g, ' $1')}</label>
+return (
+  <div
+    className="fixed inset-0 z-50 flex items-start justify-center pt-12 pb-12 overflow-auto"
+    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+    onClick={(e) => {
+      if (e.target === e.currentTarget) onClose();
+    }}
+  >
+    <div className="bg-[#121212] text-white rounded-lg w-full max-w-[500px] shadow-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="flex justify-between items-center p-6 border-b border-zinc-700">
+        <h2 className="text-lg font-semibold">Add Agreement Details</h2>
+        <button onClick={onClose} className="text-xl text-white">&times;</button>
+      </div>
+      <div className="p-6 space-y-4">
+
+        {/* Regular Fields */}
+        {[
+          'onroadprice',
+          'loanAmount',
+          'bankProcessingFee',
+          'downPayment',
+          'dues',
+          'magadhMargin'
+        ].map((field, idx) => (
+          <div key={field} className="flex items-center gap-4">
+            <label className="w-40 capitalize text-sm text-zinc-400">
+              {field.replace(/([A-Z])/g, ' $1')}
+            </label>
+            <input
+              ref={idx === 0 ? firstInputRef : null}
+              name={field}
+              value={formData[field]}
+              onChange={handleChange}
+              disabled={!isEditing}
+              className="flex-1 px-3 py-2 bg-zinc-800 text-white rounded-md focus:outline-none"
+            />
+          </div>
+        ))}
+
+        {/* DTO Section */}
+        <div className="mt-6">
+          <h3 className="text-blue-400 font-semibold mb-2">DTO Section</h3>
+          {['registerationAmount', 'permit', 'onlinePayment'].map((field) => (
+            <div key={field} className="flex items-center gap-4 mb-2">
+              <label className="w-40 capitalize text-sm text-zinc-400">
+                {field.replace(/([A-Z])/g, ' $1')}
+              </label>
               <input
-                ref={idx === 0 ? firstInputRef : null}
-                name={name}
-                value={formData[name]}
+                name={field}
+                value={formData[field]}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-zinc-800 rounded text-white"
                 disabled={!isEditing}
+                className="flex-1 px-3 py-2 bg-zinc-800 text-white rounded-md focus:outline-none"
               />
             </div>
           ))}
+        </div>
 
-          <div>
-            <label className="block text-sm mb-1">Payment Type</label>
-            <select
-              name="paymentType"
-              value={formData.paymentType}
-              onChange={handleChange}
-              className="w-full px-3 py-2 bg-zinc-800 rounded text-white"
-              disabled={!isEditing}
-            >
-              <option value="">Select type</option>
-              <option value="cash">Cash</option>
-              <option value="online">Online</option>
-              <option value="loan">Loan</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1">Payment Date</label>
+        {/* Auto-calculated */}
+        <div className="space-y-2 mt-4">
+          <div className="flex items-center gap-4">
+            <label className="w-40 text-sm text-zinc-400">Total DTO Payment</label>
             <input
-              type="date"
-              name="paymentDate"
-              value={formData.paymentDate}
-              onChange={handleChange}
-              className="w-full px-3 py-2 bg-zinc-800 rounded text-white"
-              disabled={!isEditing}
+              name="totatDTOPayment"
+              value={formData.totatDTOPayment}
+              disabled
+              className="flex-1 px-3 py-2 bg-zinc-900 text-white rounded-md"
             />
           </div>
-
-          <div>
-            <label className="block text-sm mb-1">Remarks</label>
-            {formData.remarks.map((remark, index) => (
-              <input
-                key={index}
-                value={remark}
-                onChange={(e) => handleRemarkChange(index, e.target.value)}
-                className="w-full mb-2 px-3 py-2 bg-zinc-800 rounded text-white"
-                disabled={!isEditing}
-              />
-            ))}
-            {/* {isEditing && ( */}
-              <button onClick={addRemark} className="text-blue-400 text-sm">+ Add Remark</button>
+          <div className="flex items-center gap-4">
+            <label className="w-40 text-sm text-zinc-400">Net Profit</label>
+            <input
+              name="netprofit"
+              value={formData.netprofit}
+              disabled
+              className="flex-1 px-3 py-2 bg-zinc-900 text-white rounded-md"
+            />
           </div>
+        </div>
 
-          <div className="flex justify-end gap-3 p-6 border-t border-zinc-700 bg-[#121212]">
+        {/* Payment Type */}
+        <div className="flex items-center gap-4 mt-4">
+          <label className="w-40 text-sm text-zinc-400">Payment Type</label>
+          <select
+            name="paymentType"
+            value={formData.paymentType}
+            onChange={handleChange}
+            disabled={!isEditing}
+            className="flex-1 px-3 py-2 bg-zinc-800 text-white rounded-md"
+          >
+            <option value="">Select type</option>
+            <option value="cash">Cash</option>
+            <option value="online">Online</option>
+            <option value="loan">Loan</option>
+          </select>
+        </div>
+
+        {/* Payment Date */}
+        <div className="flex items-center gap-4">
+          <label className="w-40 text-sm text-zinc-400">Payment Date</label>
+          <input
+            type="date"
+            name="paymentDate"
+            value={formData.paymentDate}
+            onChange={handleChange}
+            disabled={!isEditing}
+            className="flex-1 px-3 py-2 bg-zinc-800 text-white rounded-md"
+          />
+        </div>
+
+        {/* Remarks */}
+        <div className="mt-4">
+          <label className="text-sm text-zinc-400 mb-1 block">Remarks</label>
+          {formData.remarks.map((remark, idx) => (
+            <input
+              key={idx}
+              value={remark}
+              onChange={(e) => handleRemarkChange(idx, e.target.value)}
+              disabled={!isEditing}
+              className="w-full mb-2 px-3 py-2 bg-zinc-800 text-white rounded-md"
+            />
+          ))}
+          {isEditing && (
+            <button onClick={addRemark} className="text-blue-400 text-sm mt-1">+ Add Remark</button>
+          )}
+        </div>
+
+        {/* Footer Buttons */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-zinc-700 mt-6">
           <button
             type="button"
             onClick={onClose}
@@ -223,12 +291,14 @@ export default function AddAgreementDialog({ open, onClose, onSave, customer }) 
               onClick={handleSave}
               className="px-4 py-2 bg-white text-black font-semibold rounded-md hover:bg-zinc-200"
             >
-              Save Challan
+              Save Agreement
             </button>
           )}
         </div>
-        </div>
       </div>
     </div>
-  );
+  </div>
+);
+
+
 }

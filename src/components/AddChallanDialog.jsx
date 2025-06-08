@@ -19,18 +19,16 @@ export default function AddChallanDialog({ open, onClose, onSave, customer }) {
     motorNo: '',
     tools: false,
     rear: false,
-    tyre: false,
+    tyreMakeFront: false,
     mirror: false,
-    front: false,
   });
 
   const [isEditing, setIsEditing] = useState(true);
   const firstInputRef = useRef(null);
 
   useEffect(() => {
-    if (open && firstInputRef.current) {
-      firstInputRef.current.focus();
-    }
+    if (open && firstInputRef.current) firstInputRef.current.focus();
+
     if (open && customer?.challan) {
       setFormData({
         challanNo: customer.challan.challanNo || '',
@@ -49,9 +47,8 @@ export default function AddChallanDialog({ open, onClose, onSave, customer }) {
         motorNo: customer.challan.motorNo || '',
         tools: customer.challan.tools || false,
         rear: customer.challan.rear || false,
-        tyre: customer.challan.tyre || false,
+        tyreMakeFront: customer.challan.tyreMakeFront || false,
         mirror: customer.challan.mirror || false,
-        front: customer.challan.front || false,
       });
       setIsEditing(false);
     } else if (open) {
@@ -72,9 +69,8 @@ export default function AddChallanDialog({ open, onClose, onSave, customer }) {
         motorNo: '',
         tools: false,
         rear: false,
-        tyre: false,
+        tyreMakeFront: false,
         mirror: false,
-        front: false,
       });
       setIsEditing(true);
     }
@@ -135,7 +131,7 @@ export default function AddChallanDialog({ open, onClose, onSave, customer }) {
     'frameNo', 'engineNo', 'bookNo', 'cylinderNo', 'motorNo'
   ];
 
-  const checkboxes = ['tools', 'rear', 'tyre', 'mirror', 'front'];
+  const checkboxes = ['tools', 'rear', 'tyreMakeFront', 'mirror'];
 
   return (
     <div
@@ -143,42 +139,58 @@ export default function AddChallanDialog({ open, onClose, onSave, customer }) {
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-[#121212] text-white rounded-lg w-full max-w-[400px] shadow-lg mx-4 max-h-[600px] flex flex-col">
+      <div className="bg-[#121212] text-white rounded-lg w-full max-w-[500px] shadow-lg mx-4 max-h-[80vh] flex flex-col">
         <div className="flex justify-between items-center p-6 border-b border-zinc-700">
           <h2 className="text-lg font-semibold">{isEditing ? 'Add Challan' : 'View Challan'}</h2>
-          <button onClick={onClose}>&times;</button>
+          <button onClick={onClose} className="text-2xl font-bold leading-none">&times;</button>
         </div>
-        <div className="p-6 overflow-auto">
+        <div className="p-6 overflow-auto flex-grow">
           {inputs.map((field, idx) => (
-            <div key={field} className="mb-4">
-              <label className="block mb-1 text-sm capitalize" htmlFor={field}>{field.replace(/([A-Z])/g, ' $1')}</label>
+            <div key={field} className="flex items-center gap-4 mb-4">
+              <label
+                htmlFor={field}
+                className="w-40 text-sm text-zinc-400 capitalize"
+              >
+                {field.replace(/([A-Z])/g, ' $1')}
+              </label>
               <input
                 ref={idx === 0 ? firstInputRef : null}
                 type="text"
+                id={field}
                 name={field}
+                placeholder={`Enter ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`}
                 value={formData[field]}
                 onChange={handleChange}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-zinc-800 text-white border border-zinc-600 rounded"
+                className="flex-1 px-3 py-2 bg-zinc-800 text-white rounded-md border border-zinc-600 placeholder:text-zinc-500 placeholder:italic focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           ))}
 
-          {checkboxes.map(field => (
-            <div key={field} className="mb-2 flex items-center">
-              <input
-                type="checkbox"
-                name={field}
-                checked={formData[field]}
-                onChange={handleChange}
-                disabled={!isEditing}
-                className="mr-2"
-              />
-              <label htmlFor={field} className="text-sm capitalize">{field}</label>
-            </div>
-          ))}
+          <div className="mt-8 flex flex-wrap gap-6">
+            {checkboxes.map(field => (
+              <div key={field} className="flex items-center cursor-pointer select-none min-w-[150px]">
+                <input
+                  type="checkbox"
+                  id={field}
+                  name={field}
+                  checked={!!formData[field]}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  className="mr-3 h-6 w-6 cursor-pointer"
+                />
+                <label
+                  htmlFor={field}
+                  className="text-base capitalize cursor-pointer whitespace-nowrap"
+                >
+                  {field.replace(/([A-Z])/g, ' $1')}
+                </label>
+              </div>
+            ))}
+          </div>
         </div>
-       <div className="flex justify-end gap-3 p-6 border-t border-zinc-700 bg-[#121212]">
+
+        <div className="flex justify-end gap-3 p-6 border-t border-zinc-700 bg-[#121212]">
           <button
             type="button"
             onClick={onClose}

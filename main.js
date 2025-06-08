@@ -26,7 +26,7 @@ async function createWindow() {
     win.show();
 
     // Set zoom factor to 90% (0.9)
-    win.webContents.setZoomFactor(0.7);
+    win.webContents.setZoomFactor(0.9);
   });
 }
 

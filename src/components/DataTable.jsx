@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Plus } from 'lucide-react';
 import AddCustomerDialog from '../components/AddCustomerDialog';
@@ -33,12 +34,16 @@ export default function DataTable() {
   }, []);
 
   // Filter columns: exclude those where ANY customer has an object value for that key
-  const allColumns = Array.from(
+  const baseColumns = Array.from(
     new Set(customers.flatMap(Object.keys))
   ).filter(col =>
-    // Keep column only if **no customer** has an object value for it
     !customers.some(customer => typeof customer[col] === 'object' && customer[col] !== null)
   );
+
+  // Add derived columns (like agreement.dues)
+  const derivedColumns = ['dues'];
+  const allColumns = [...baseColumns, ...derivedColumns];
+
 
 
   useEffect(() => {
@@ -210,9 +215,12 @@ export default function DataTable() {
                   <td className="py-3 px-4">{idx + 1}</td>
                   {visibleColumns.map((col) => (
                     <td key={col} className="py-3 px-4">
-                      {row[col]}
+                      {col === 'dues'
+                        ? row.agreement?.dues ?? '-'
+                        : row[col]}
                     </td>
                   ))}
+
                   <td className="py-3 px-4 flex gap-2">
                     <button
                       onClick={() => handleAddChallan(row)}
@@ -232,24 +240,29 @@ export default function DataTable() {
                       onClick={() => handleAddAgreement(row)}
                       className="bg-purple-600 hover:bg-purple-700 text-white px-3 rounded h-8 flex items-center justify-center whitespace-nowrap"
                     >
-                      Add Agreement
+                      {row.agreement && Object.keys(row.agreement).length > 0 ? 'View Agreement' : 'Add Agreement'}
                     </button>
+
 
 
                     <AddAgreementDialog
                       open={agreementOpen}
-                      onClose={() => setAgreementOpen(false)}
-                      onSave={(updatedCustomer) => {
-                        setCustomers(prevCustomers =>
-      prevCustomers.map(cust =>
-        cust._id === updatedCustomer._id ? updatedCustomer : cust
-      )
-    );
-                        // Optionally update your table or customer list here
+                      onClose={() => {
                         setAgreementOpen(false);
+                        setSelectedCustomer(null);
+                      }}
+                      onSave={(updatedCustomer) => {
+                        setCustomers(prev =>
+                          prev.map(c =>
+                            c._id === updatedCustomer._id ? updatedCustomer : c
+                          )
+                        );
+                        setAgreementOpen(false);
+                        setSelectedCustomer(null);
                       }}
                       customer={selectedCustomer}
                     />
+
                   </td>
                 </tr>
               ))
