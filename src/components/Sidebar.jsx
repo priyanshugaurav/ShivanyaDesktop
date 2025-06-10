@@ -8,8 +8,8 @@ import { Link, useLocation } from 'react-router-dom';
 const menuItems = [
   { icon: <Home size={18} />, label: 'Home', count: 1, to: '/' },
   { icon: <User size={18} />, label: 'Sales', count: 2, to: '/sales' },
-  { icon: <Code size={18} />, label: 'Projects', count: 3 },
-  { icon: <Pencil size={18} />, label: 'Writing', count: 4 },
+  { icon: <Code size={18} />, label: 'Enquiries', count: 3 , to: '/Enquiries'},
+  { icon: <Pencil size={18} />, label: 'Employees', count: 4 ,  to: '/Employee'},
   { icon: <LineChart size={18} />, label: 'Investments', count: 5 },
 ];
 

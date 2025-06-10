@@ -5,6 +5,8 @@ import Sales from './pages/Sales';
 import Sidebar from '../src/components/Sidebar';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Enquiries from './pages/Enquiries';
+import Employee from './pages/Employee';
 import { useUser } from './context/UserContext';
 
 function App() {
@@ -20,6 +22,8 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login onLogin={setUser} />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/Enquiries" element={<Signup />} />
+          <Route path="/Employee" element={<Employee />} />
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       ) : (
@@ -29,6 +33,8 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/sales" element={<Sales />} />
+              <Route path="/Enquiries" element={<Enquiries />} />
+              <Route path="/Employee" element={<Employee />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>

@@ -136,6 +136,192 @@ app.get('/customers', async (req, res) => {
   }
 });
 
+// Create new employee
+app.post('/employees', async (req, res) => {
+  try {
+    const {
+      name,
+      phone,
+      salary,
+      joiningDate,
+      attendanceDetails,
+      salaryHistory
+    } = req.body;
+
+    if (!name || !salary) {
+      return res.status(400).json({ success: false, error: 'Name and salary are required.' });
+    }
+
+    const employees = db.collection('employees');
+
+    let processedSalaryHistory = [];
+    if (Array.isArray(salaryHistory)) {
+      processedSalaryHistory = salaryHistory.map(entry => {
+        const decided = entry.decidedSalary || salary;
+        const incentiveArray = Array.isArray(entry.incentive) ? entry.incentive : [];
+        const totalIncentive = incentiveArray.reduce((sum, i) => sum + i.amount, 0);
+        return {
+          ...entry,
+          decidedSalary: decided,
+          incentive: incentiveArray,
+          totalPaid: decided + totalIncentive,
+          paid: false,
+          paidOn: null,
+        };
+      });
+    }
+
+    const newEmployee = {
+  name,
+  phone: phone || '',
+  salary: parseInt(salary),  // 👈 ensure it's stored as a number
+  joiningDate: joiningDate ? new Date(joiningDate) : new Date(),
+  attendanceDetails: Array.isArray(attendanceDetails) ? attendanceDetails : [],
+  salaryHistory: processedSalaryHistory,
+  createdAt: new Date()
+};
+
+
+    const result = await employees.insertOne(newEmployee);
+    const insertedEmployee = await employees.findOne({ _id: result.insertedId });
+    insertedEmployee._id = insertedEmployee._id.toString();
+
+    res.json({ success: true, employee: insertedEmployee });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Add incentive by employee name
+app.post('/employees/incentive/by-name', async (req, res) => {
+  try {
+    const { name, month, year, incentive, nameShifted, phoneShifted } = req.body;
+
+    if (!name || !month || !year || typeof incentive !== 'number') {
+      return res.status(400).json({ success: false, error: 'Name, month, year, and incentive are required.' });
+    }
+
+    const employees = db.collection('employees');
+    const employee = await employees.findOne({ name: name.trim() });
+
+    if (!employee) {
+      return res.status(404).json({ success: false, error: 'Employee not found' });
+    }
+
+    let updated = false;
+    const updatedSalaryHistory = (employee.salaryHistory || []).map(entry => {
+      if (entry.month === month && entry.year === year) {
+        entry.incentive = Array.isArray(entry.incentive) ? entry.incentive : [];
+
+        entry.incentive.push({
+          amount: incentive,
+          nameShifted: nameShifted || 'Unknown',
+          phoneShifted: phoneShifted || '',
+          dateShifted: new Date()
+        });
+
+        const totalIncentive = entry.incentive.reduce((sum, i) => sum + i.amount, 0);
+        entry.totalPaid = (entry.decidedSalary || employee.salary) + totalIncentive;
+        entry.paid = entry.paid || false;
+        entry.paidOn = entry.paidOn || null;
+
+        updated = true;
+      }
+      return entry;
+    });
+
+    if (!updated) {
+      updatedSalaryHistory.push({
+        month,
+        year,
+        decidedSalary: employee.salary,
+        incentive: [
+          {
+            amount: incentive,
+            nameShifted: nameShifted || 'Unknown',
+            phoneShifted: phoneShifted || '',
+            dateShifted: new Date()
+          }
+        ],
+        totalPaid: employee.salary + incentive,
+        paid: false,
+        paidOn: null
+      });
+    }
+
+    await employees.updateOne(
+      { name: name.trim() },
+      { $set: { salaryHistory: updatedSalaryHistory } }
+    );
+
+    res.json({ success: true, message: 'Incentive added successfully.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Mark salary as paid
+app.post('/employees/mark-paid', async (req, res) => {
+  try {
+    const { name, month, year } = req.body;
+
+    if (!name || !month || !year) {
+      return res.status(400).json({ success: false, error: 'Name, month, and year are required.' });
+    }
+
+    const employees = db.collection('employees');
+    const employee = await employees.findOne({ name: name.trim() });
+
+    if (!employee) {
+      return res.status(404).json({ success: false, error: 'Employee not found' });
+    }
+
+    const updatedSalaryHistory = (employee.salaryHistory || []).map(entry => {
+      if (entry.month === month && entry.year === year) {
+        entry.paid = true;
+        entry.paidOn = new Date();
+      }
+      return entry;
+    });
+
+    await employees.updateOne(
+      { name: name.trim() },
+      { $set: { salaryHistory: updatedSalaryHistory } }
+    );
+
+    res.json({ success: true, message: 'Marked as paid.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+
+
+app.get('/employees', async (req, res) => {
+  try {
+    const employees = db.collection('employees');
+    const employeeList = await employees.find({}).toArray();
+
+    // Convert _id to string for frontend compatibility
+    const cleaned = employeeList.map(emp => ({
+      ...emp,
+      _id: emp._id.toString()
+    }));
+
+    res.json({ success: true, employees: cleaned });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+
+
 
 app.post('/customers/:id/challan', async (req, res) => {
   try {
@@ -289,6 +475,9 @@ app.post('/customers/:id/agreement', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
+
 
 
 
